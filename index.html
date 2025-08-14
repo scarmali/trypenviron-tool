@@ -798,17 +798,4 @@
         }
     </script>
 </body>
-</html> Find wavelength column
-                        let headerIndex = -1;
-                        for (let i = 0; i < Math.min(lines.length, 10); i++) {
-                            if (lines[i].toLowerCase().includes('wavelength')) {
-                                headerIndex = i;
-                                break;
-                            }
-                        }
-                        
-                        if (headerIndex === -1) {
-                            throw new Error('No wavelength header found');
-                        }
-                        
-                        //
+</html> 
