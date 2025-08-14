@@ -1,9 +1,12 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TrypEnviron - Tryptophan Environment Analysis</title>
+    <meta name="description" content="Extract emission maxima peaks from tryptophan fluorescence spectroscopy raw data - automated peak detection tool for protein analysis">
+    <meta name="keywords" content="tryptophan, fluorescence, spectroscopy, protein, analysis, PMIG, Queen's University Belfast">
+    <meta name="author" content="Protein Material Interface Group">
     <style>
         /* Using PMIG website color scheme and styling */
         :root {
@@ -623,32 +626,55 @@
             handleFiles(Array.from(e.target.files));
         });
 
-        uploadArea.addEventListener('click', function() {
-            fileInput.click();
+        uploadArea.addEventListener('click', function(e) {
+            // Only trigger file input if not clicking on a button
+            if (!e.target.closest('.btn')) {
+                fileInput.click();
+            }
         });
 
         uploadArea.addEventListener('dragover', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             uploadArea.classList.add('dragover');
         });
 
         uploadArea.addEventListener('drop', function(e) {
             e.preventDefault();
+            e.stopPropagation();
             uploadArea.classList.remove('dragover');
-            handleFiles(Array.from(e.dataTransfer.files));
+            const files = Array.from(e.dataTransfer.files);
+            if (files.length > 0) {
+                handleFiles(files);
+            }
         });
 
-        uploadArea.addEventListener('dragleave', function() {
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             uploadArea.classList.remove('dragover');
         });
 
         function handleFiles(files) {
-            uploadedFiles = [...uploadedFiles, ...files];
+            console.log('Files received:', files); // Debug log
+            const validFiles = files.filter(file => {
+                const validExtensions = ['.csv', '.txt'];
+                const extension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                return validExtensions.includes(extension);
+            });
+            
+            if (validFiles.length === 0) {
+                alert('Please select CSV or TXT files only.');
+                return;
+            }
+            
+            uploadedFiles = [...uploadedFiles, ...validFiles];
             updateFileList();
             document.getElementById('clear-btn').style.display = 'inline-block';
         }
 
         function updateFileList() {
+            console.log('Updating file list with:', uploadedFiles); // Debug log
             const fileList = document.getElementById('file-list');
             const filesDiv = document.getElementById('files');
             
@@ -656,14 +682,28 @@
                 fileList.classList.remove('hidden');
                 filesDiv.innerHTML = '';
                 
-                uploadedFiles.forEach(file => {
+                uploadedFiles.forEach((file, index) => {
                     const div = document.createElement('div');
                     div.className = 'file-item';
-                    div.textContent = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+                    div.innerHTML = `
+                        <span>${file.name} (${(file.size/1024).toFixed(1)} KB)</span>
+                        <button onclick="removeFile(${index})" style="background: #dc3545; color: white; border: none; padding: 0.3rem 0.8rem; border-radius: 15px; cursor: pointer; font-size: 0.8rem;">Remove</button>
+                    `;
                     filesDiv.appendChild(div);
                 });
                 
                 document.getElementById('process-btn').disabled = false;
+            } else {
+                fileList.classList.add('hidden');
+                document.getElementById('process-btn').disabled = true;
+            }
+        }
+
+        function removeFile(index) {
+            uploadedFiles.splice(index, 1);
+            updateFileList();
+            if (uploadedFiles.length === 0) {
+                document.getElementById('clear-btn').style.display = 'none';
             }
         }
 
@@ -722,9 +762,25 @@
                         const content = e.target.result;
                         const lines = content.split('\n');
                         
+                        // Find wavelength column - THIS WAS THE MISSING PART!
+                        let headerIndex = -1;
+                        for (let i = 0; i < Math.min(lines.length, 10); i++) {
+                            if (lines[i].toLowerCase().includes('wavelength')) {
+                                headerIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        // If no header found, assume first row is data
+                        if (headerIndex === -1) {
+                            headerIndex = 0; // Start from first line
+                        } else {
+                            headerIndex = headerIndex + 1; // Start from line after header
+                        }
+                        
                         // Parse data
                         const data = [];
-                        for (let i = headerIndex + 1; i < lines.length; i++) {
+                        for (let i = headerIndex; i < lines.length; i++) {
                             const line = lines[i].trim();
                             if (!line) continue;
                             
@@ -798,4 +854,4 @@
         }
     </script>
 </body>
-</html> 
+</html>
