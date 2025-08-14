@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrypEnviron - Tryptophan Environment Analysis</title>
+    <style>
+        /* Using PMIG website color scheme and styling */
+        :root {
+            --primary-color: #0a3d62;
+            --secondary-color: #1e88e5;
+            --accent-color: #4dd0e1;
+            --light-bg: #f8f9fa;
+            --dark-text: #343a40;
+            --medium-text: #5f6770;
+            --light-text: #ffffff;
+            --border-color: #e0e0e0;
+            --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            --card-hover-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+            --font-main: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-main);
+            line-height: 1.7;
+            color: var(--dark-text);
+            background-color: var(--light-bg);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* PMIG-style header */
+        .header {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            padding: 3rem 1rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: 3.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--light-text);
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.95;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            color: var(--light-text);
+        }
+
+        .header-description {
+            font-size: 1rem;
+            opacity: 0.85;
+            max-width: 800px;
+            margin: 0 auto;
+            color: var(--light-text);
+        }
+
+        /* Main content area */
+        main {
+            flex: 1;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* PMIG-style cards */
+        .card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .card h3 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.3rem;
+        }
+
+        /* PMIG-style buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 1.8rem;
+            background-color: var(--secondary-color);
+            color: var(--light-text);
+            border-radius: 50px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(30, 136, 229, 0.3);
+            border: 2px solid transparent;
+            text-decoration: none;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(77, 208, 225, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Upload section styling */
+        .upload-section {
+            background: var(--light-text);
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--card-shadow);
+        }
+
+        .upload-section:hover {
+            border-color: var(--secondary-color);
+            background-color: rgba(30, 136, 229, 0.02);
+            transform: translateY(-2px);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .upload-section.dragover {
+            border-color: var(--accent-color);
+            background-color: rgba(77, 208, 225, 0.05);
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: var(--card-hover-shadow);
+        }
+
+        .upload-section h2 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .upload-section p {
+            color: var(--medium-text);
+            margin-bottom: 1rem;
+            font-size: 1rem;
+        }
+
+        .upload-section small {
+            color: var(--medium-text);
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 2rem;
+            padding: 1rem 1.5rem;
+            background: var(--light-bg);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: inline-block;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-list {
+            margin-top: 2rem;
+        }
+
+        .file-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-item:hover {
+            background-color: var(--light-bg);
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .results {
+            background: var(--light-text);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: var(--card-shadow);
+        }
+
+        .results h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .results table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .results th {
+            background: var(--light-bg);
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--medium-text);
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .results td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--dark-text);
+        }
+
+        .results tr:hover {
+            background: var(--light-bg);
+        }
+
+        .results tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Interpretation guide styling - PMIG style */
+        .interpretation-guide {
+            background: var(--light-text);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: var(--card-shadow);
+        }
+
+        .interpretation-guide h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .guide-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin: 1.5rem 0;
+        }
+
+        .guide-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+            border-left: 4px solid var(--secondary-color);
+            background: var(--light-bg);
+        }
+
+        .guide-card h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .guide-card p {
+            color: var(--medium-text);
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 0.5rem;
+        }
+
+        .guide-card ul {
+            list-style: disc;
+            padding-left: 1.2rem;
+            margin: 0.5rem 0;
+        }
+
+        .guide-card li {
+            margin-bottom: 0.3rem;
+            color: var(--medium-text);
+            font-size: 0.9rem;
+        }
+
+        .quick-summary {
+            background: var(--light-text);
+            border: 2px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .quick-summary h4 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .summary-grid p {
+            margin-bottom: 0.3rem;
+            font-size: 0.9rem;
+        }
+
+        .reference-note {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+            color: var(--medium-text);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* PMIG-style footer */
+        .site-footer {
+            background-color: var(--primary-color);
+            color: var(--light-bg);
+            padding: 2.5rem 1rem;
+            text-align: center;
+        }
+
+        .site-footer p {
+            color: var(--light-bg);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .social-icons a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            color: var(--light-text);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            opacity: 0.9;
+        }
+
+        .social-icons a svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .social-icons a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-color: var(--light-text);
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .header p {
+                font-size: 1.1rem;
+            }
+            
+            .header-description {
+                font-size: 0.95rem;
+            }
+            
+            main {
+                padding: 1rem;
+            }
+            
+            .upload-section {
+                padding: 2rem 1rem;
+            }
+            
+            .guide-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-content">
+            <h1>TrypEnviron</h1>
+            <p>Tryptophan environment analysis through fluorescence spectroscopy (λex = 295 nm)</p>
+            <p class="header-description">
+                Automated detection of red and blue shifts in tryptophan emission maxima to monitor protein conformational changes and local environment polarity.
+            </p>
+        </div>
+    </header>
+
+    <main>
+        <div class="upload-section" id="upload-area">
+            <h2>📊 Upload Tryptophan Fluorescence Data</h2>
+            <p>Drop files here or click to select</p>
+            <small>Supports CSV, TXT files. Expected range: 320-380 nm</small>
+            <input type="file" id="file-input" class="file-input" multiple accept=".csv,.txt">
+            <button class="btn" onclick="document.getElementById('file-input').click()">Select Files</button>
+            <button class="btn" onclick="clearFiles()" id="clear-btn" style="display: none;">Clear All</button>
+        </div>
+
+        <div id="file-list" class="file-list hidden">
+            <div class="card">
+                <h3>Uploaded Files:</h3>
+                <div id="files"></div>
+                <button class="btn" onclick="processFiles()" id="process-btn" disabled>Analyze Data</button>
+            </div>
+        </div>
+
+        <div id="results" class="results hidden">
+            <h3>Analysis Results:</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>λmax (nm)</th>
+                        <th>Intensity</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody id="results-body"></tbody>
+            </table>
+            <button class="btn" onclick="downloadCSV()">Download CSV</button>
+        </div>
+
+        <div id="interpretation-guide" class="interpretation-guide hidden">
+            <h3>🔬 Tryptophan Shift Interpretation Guide</h3>
+            
+            <div class="guide-grid">
+                <div class="guide-card">
+                    <h4>🔍 Reference Wavelengths</h4>
+                    <p><strong>Free Tryptophan in Water:</strong> ~350-355 nm</p>
+                    <p><strong>Buried in Protein:</strong> ~330-335 nm</p>
+                    <p><strong>Partially Exposed:</strong> ~340-345 nm</p>
+                    <p style="font-style: italic; margin-top: 1rem;">
+                        Note: Exact values depend on local environment and protein structure
+                    </p>
+                </div>
+
+                <div class="guide-card">
+                    <h4>🔴 Red Shift (Higher λmax)</h4>
+                    <p><strong>Indicates:</strong> More polar environment</p>
+                    <ul>
+                        <li>Tryptophan becoming more exposed to solvent</li>
+                        <li>Protein unfolding or conformational change</li>
+                        <li>Increased accessibility to water molecules</li>
+                        <li>Loss of hydrophobic interactions</li>
+                    </ul>
+                    <p style="margin-top: 1rem;">
+                        <strong>Example:</strong> 335 nm → 345 nm = 10 nm red shift
+                    </p>
+                </div>
+
+                <div class="guide-card">
+                    <h4>🔵 Blue Shift (Lower λmax)</h4>
+                    <p><strong>Indicates:</strong> More hydrophobic environment</p>
+                    <ul>
+                        <li>Tryptophan becoming more buried</li>
+                        <li>Protein folding or compaction</li>
+                        <li>Decreased solvent accessibility</li>
+                        <li>Increased hydrophobic interactions</li>
+                    </ul>
+                    <p style="margin-top: 1rem;">
+                        <strong>Example:</strong> 345 nm → 335 nm = 10 nm blue shift
+                    </p>
+                </div>
+
+                <div class="guide-card">
+                    <h4>📊 Practical Applications</h4>
+                    <ul>
+                        <li><strong>Protein folding studies:</strong> Monitor folding transitions</li>
+                        <li><strong>Denaturation experiments:</strong> Track unfolding processes</li>
+                        <li><strong>Ligand binding:</strong> Detect conformational changes</li>
+                        <li><strong>pH effects:</strong> Study ionization-induced changes</li>
+                        <li><strong>Temperature studies:</strong> Thermal stability analysis</li>
+                    </ul>
+                </div>
+
+                <div class="guide-card">
+                    <h4>⚠️ Important Considerations</h4>
+                    <ul>
+                        <li><strong>Multiple tryptophans:</strong> Results represent average environment</li>
+                        <li><strong>Energy transfer:</strong> May affect observed wavelengths</li>
+                        <li><strong>pH effects:</strong> Ionization can influence fluorescence</li>
+                        <li><strong>Temperature:</strong> Can affect both structure and fluorescence</li>
+                        <li><strong>Significance:</strong> Shifts >2-3 nm typically meaningful</li>
+                    </ul>
+                </div>
+
+                <div class="guide-card">
+                    <h4>🎯 Experimental Tips</h4>
+                    <ul>
+                        <li><strong>Controls:</strong> Always include native protein reference</li>
+                        <li><strong>Replicates:</strong> Perform multiple measurements</li>
+                        <li><strong>Buffer effects:</strong> Keep ionic strength consistent</li>
+                        <li><strong>Concentration:</strong> Use consistent protein concentrations</li>
+                        <li><strong>Time course:</strong> Monitor changes over time if relevant</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="quick-summary">
+                <h4>💡 Quick Interpretation Summary</h4>
+                <div class="summary-grid">
+                    <div>
+                        <p><strong>Red Shift (→ higher nm):</strong></p>
+                        <p style="color: #dc3545;">• More exposed to water</p>
+                        <p style="color: #dc3545;">• Less structured environment</p>
+                        <p style="color: #dc3545;">• Possible unfolding</p>
+                    </div>
+                    <div>
+                        <p><strong>Blue Shift (→ lower nm):</strong></p>
+                        <p style="color: #007bff;">• More hydrophobic environment</p>
+                        <p style="color: #007bff;">• More structured/buried</p>
+                        <p style="color: #007bff;">• Possible folding/compaction</p>
+                    </div>
+                </div>
+                <div class="reference-note">
+                    <strong>Reference:</strong> For detailed mechanisms of tryptophan fluorescence shifts, see 
+                    <em>Vivian, J.T. & Callis, P.R. (2001). Mechanisms of Tryptophan Fluorescence Shifts in Proteins. Biophysical Journal, 80(5), 2093-2109.</em>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p>© 2025 Protein Material Interface Group | School of Pharmacy, Queen's University Belfast</p>
+        <div class="social-icons">
+            <a href="https://www.linkedin.com" target="_blank" aria-label="LinkedIn">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M4.98 3.5C4.98 4.88 3.88 6 2.5 6S0 4.88 0 3.5 1.12 1 2.5 1 4.98 2.12 4.98 3.5zM.5 8h4V24h-4V8zm7.5 0h3.8v2.16h.05c.53-1 1.83-2.16 3.77-2.16 4.03 0 4.78 2.65 4.78 6.1V24h-4v-7.94c0-1.9-.03-4.35-2.65-4.35-2.65 0-3.05 2.07-3.05 4.21V24h-4V8z"/>
+                </svg>
+            </a>
+            <a href="https://www.instagram.com" target="_blank" aria-label="Instagram">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 1.17.056 1.97.24 2.423.403a4.9 4.9 0 0 1 1.77 1.145 4.9 4.9 0 0 1 1.145 1.77c.163.453.347 1.253.403 2.423.058 1.266.07 1.646.07 4.85s-.012 3.584-.07 4.85c-.056 1.17-.24 1.97-.403 2.423a4.9 4.9 0 0 1-1.145 1.77 4.9 4.9 0 0 1-1.77 1.145c-.453.163-1.253.347-2.423.403-1.266.058-1.646.07-4.85.07s-3.584-.012-4.85-.07c-1.17-.056-1.97-.24-2.423-.403a4.9 4.9 0 0 1-1.77-1.145 4.9 4.9 0 0 1-1.145-1.77c-.163-.453-.347-1.253-.403-2.423C2.175 15.747 2.163 15.367 2.163 12s.012-3.584.07-4.85c.056-1.17.24-1.97.403-2.423a4.9 4.9 0 0 1 1.145-1.77 4.9 4.9 0 0 1 1.77-1.145c.453-.163 1.253-.347 2.423-.403C8.416 2.175 8.796 2.163 12 2.163zm0-2.163C8.736 0 8.332.014 7.052.072 5.773.13 4.731.322 3.9.647a6.92 6.92 0 0 0-2.5 1.645A6.92 6.92 0 0 0 .647 4.79c-.325.831-.517 1.873-.575 3.152C.014 8.332 0 8.736 0 12c0 3.264.014 3.668.072 4.948.058 1.279.25 2.321.575 3.152a6.92 6.92 0 0 0 1.645 2.5 6.92 6.92 0 0 0 2.5 1.645c.831.325 1.873.517 3.152.575C8.332 23.986 8.736 24 12 24s3.668-.014 4.948-.072c1.279-.058 2.321-.25 3.152-.575a6.92 6.92 0 0 0 2.5-1.645 6.92 6.92 0 0 0 1.645-2.5c.325-.831.517-1.873.575-3.152.058-1.28.072-1.684.072-4.948s-.014-3.668-.072-4.948c-.058-1.279-.25-2.321-.575-3.152a6.92 6.92 0 0 0-1.645-2.5A6.92 6.92 0 0 0 20.1.647c-.831-.325-1.873-.517-3.152-.575C15.668.014 15.264 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-8 3.999 3.999 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 1 0-2.88 1.44 1.44 0 0 1 0 2.88z"/>
+                </svg>
+            </a>
+        </div>
+    </footer>
+
+    <script>
+        let uploadedFiles = [];
+        let analysisResults = [];
+
+        // Simple file upload handling
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+
+        fileInput.addEventListener('change', function(e) {
+            handleFiles(Array.from(e.target.files));
+        });
+
+        uploadArea.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(Array.from(e.dataTransfer.files));
+        });
+
+        uploadArea.addEventListener('dragleave', function() {
+            uploadArea.classList.remove('dragover');
+        });
+
+        function handleFiles(files) {
+            uploadedFiles = [...uploadedFiles, ...files];
+            updateFileList();
+            document.getElementById('clear-btn').style.display = 'inline-block';
+        }
+
+        function updateFileList() {
+            const fileList = document.getElementById('file-list');
+            const filesDiv = document.getElementById('files');
+            
+            if (uploadedFiles.length > 0) {
+                fileList.classList.remove('hidden');
+                filesDiv.innerHTML = '';
+                
+                uploadedFiles.forEach(file => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.textContent = `${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+                    filesDiv.appendChild(div);
+                });
+                
+                document.getElementById('process-btn').disabled = false;
+            }
+        }
+
+        function clearFiles() {
+            uploadedFiles = [];
+            analysisResults = [];
+            document.getElementById('file-list').classList.add('hidden');
+            document.getElementById('results').classList.add('hidden');
+            document.getElementById('interpretation-guide').classList.add('hidden');
+            document.getElementById('clear-btn').style.display = 'none';
+            document.getElementById('process-btn').disabled = true;
+            fileInput.value = '';
+        }
+
+        async function processFiles() {
+            const resultsDiv = document.getElementById('results');
+            const interpretationDiv = document.getElementById('interpretation-guide');
+            const resultsBody = document.getElementById('results-body');
+            
+            resultsBody.innerHTML = '';
+            analysisResults = [];
+            
+            for (let file of uploadedFiles) {
+                try {
+                    const result = await analyzeFile(file);
+                    analysisResults.push(result);
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${result.filename}</td>
+                        <td>${result.wavelength}</td>
+                        <td>${result.intensity}</td>
+                        <td>${result.confidence}</td>
+                    `;
+                    resultsBody.appendChild(row);
+                } catch (error) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${file.name}</td>
+                        <td colspan="3">Error: ${error.message}</td>
+                    `;
+                    resultsBody.appendChild(row);
+                }
+            }
+            
+            resultsDiv.classList.remove('hidden');
+            interpretationDiv.classList.remove('hidden');
+        }
+
+        async function analyzeFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    try {
+                        const content = e.target.result;
+                        const lines = content.split('\n');
+                        
+                        // Parse data
+                        const data = [];
+                        for (let i = headerIndex + 1; i < lines.length; i++) {
+                            const line = lines[i].trim();
+                            if (!line) continue;
+                            
+                            const parts = line.split(/[,\t]/);
+                            if (parts.length >= 2) {
+                                const wavelength = parseFloat(parts[0]);
+                                const intensity = parseFloat(parts[1]);
+                                
+                                if (!isNaN(wavelength) && !isNaN(intensity)) {
+                                    data.push({ wavelength, intensity });
+                                }
+                            }
+                        }
+                        
+                        if (data.length < 3) {
+                            throw new Error('Insufficient data points');
+                        }
+                        
+                        // Find peak in tryptophan range (320-380 nm)
+                        const trypRange = data.filter(d => d.wavelength >= 320 && d.wavelength <= 380);
+                        
+                        if (trypRange.length === 0) {
+                            throw new Error('No data in tryptophan range (320-380 nm)');
+                        }
+                        
+                        // Find maximum
+                        const maxPoint = trypRange.reduce((max, current) => 
+                            current.intensity > max.intensity ? current : max
+                        );
+                        
+                        // Simple confidence based on peak prominence
+                        const avgIntensity = trypRange.reduce((sum, d) => sum + d.intensity, 0) / trypRange.length;
+                        const prominence = maxPoint.intensity / avgIntensity;
+                        
+                        let confidence;
+                        if (prominence > 3) confidence = 'High';
+                        else if (prominence > 2) confidence = 'Medium';
+                        else confidence = 'Low';
+                        
+                        resolve({
+                            filename: file.name,
+                            wavelength: Math.round(maxPoint.wavelength * 10) / 10,
+                            intensity: Math.round(maxPoint.intensity),
+                            confidence: confidence
+                        });
+                        
+                    } catch (error) {
+                        reject(error);
+                    }
+                };
+                
+                reader.onerror = () => reject(new Error('File reading failed'));
+                reader.readAsText(file);
+            });
+        }
+
+        function downloadCSV() {
+            const headers = ['Filename', 'Wavelength (nm)', 'Intensity', 'Confidence'];
+            const csvContent = [
+                headers.join(','),
+                ...analysisResults.map(r => `${r.filename},${r.wavelength},${r.intensity},${r.confidence}`)
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'trypenviron_analysis.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> Find wavelength column
+                        let headerIndex = -1;
+                        for (let i = 0; i < Math.min(lines.length, 10); i++) {
+                            if (lines[i].toLowerCase().includes('wavelength')) {
+                                headerIndex = i;
+                                break;
+                            }
+                        }
+                        
+                        if (headerIndex === -1) {
+                            throw new Error('No wavelength header found');
+                        }
+                        
+                        //
